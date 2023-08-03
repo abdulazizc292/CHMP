@@ -1,0 +1,73 @@
+import pandas as pd
+import numpy as np
+import warnings
+from sklearn.linear_model import LogisticRegression
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import GaussianNB
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.dummy import DummyClassifier
+from sklearn.multioutput import MultiOutputClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+
+# ignore future warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
+# Read the Data
+data = pd.read_csv("InitialParametersTest.csv")
+X = data.iloc[:, :9]
+Y = data.iloc[:, 10:]
+labels = Y.columns.values.tolist()
+
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y, test_size=0.3, train_size=0.7, random_state=1)
+
+# We are performing multilabel classification (Multiple binary labels):
+KNN_1 = KNeighborsClassifier(n_neighbors=1).fit(X_train, Y_train)
+KNN_3 = KNeighborsClassifier(n_neighbors=3).fit(X_train, Y_train)
+
+# Reporting the Accuracy of the models on testing data and on training data
+KNN1_pred = KNN_1.predict(X_test)
+KNN1_score = accuracy_score(Y_test, KNN1_pred)
+print("Classification Report for KNN on testing data:")
+print(classification_report(Y_test, KNN1_pred, target_names=labels, zero_division=0))
+print("Accuracy on testing data:")
+print(round(KNN1_score, 2))
+
+KNN1_pred_train = KNN_1.predict(X_train)
+KNN1_score_train = accuracy_score(Y_train, KNN1_pred_train)
+print("Classification Report for KNN on training data:")
+print(classification_report(Y_train, KNN1_pred_train, target_names=labels, zero_division=0))
+print("Accuracy on training data:")
+print(round(KNN1_score_train, 2))
+
+# Prepare data for CSV export
+classification_report_test = classification_report(Y_test, KNN1_pred, target_names=labels, zero_division=0, output_dict=True)
+classification_report_train = classification_report(Y_train, KNN1_pred_train, target_names=labels, zero_division=0, output_dict=True)
+
+results_data = {
+    "Category": labels,
+    "Precision (Test)": [classification_report_test[label]["precision"] for label in labels],
+    "Recall (Test)": [classification_report_test[label]["recall"] for label in labels],
+    "F1-score (Test)": [classification_report_test[label]["f1-score"] for label in labels],
+    "Support (Test)": [classification_report_test[label]["support"] for label in labels],
+    "Precision (Train)": [classification_report_train[label]["precision"] for label in labels],
+    "Recall (Train)": [classification_report_train[label]["recall"] for label in labels],
+    "F1-score (Train)": [classification_report_train[label]["f1-score"] for label in labels],
+    "Support (Train)": [classification_report_train[label]["support"] for label in labels],
+}
+
+results_df = pd.DataFrame(results_data)
+results_df.to_csv("classification_results.csv", index=False)
+
+print("Results exported to 'classification_results.csv'")
+
+
+
+
+
+
+# Repeat for more permutations
